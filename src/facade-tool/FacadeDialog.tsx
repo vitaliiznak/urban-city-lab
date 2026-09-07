@@ -1,14 +1,15 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ImagePlus, KeyRound, Pencil, RotateCcw, X } from "lucide-react";
+import { Check, ImagePlus, KeyRound, Mail, Pencil, RotateCcw, X } from "lucide-react";
 import type { FacadeDescription, PhotoFacadeJob } from "./types";
-
-type Status = { llm: string; codex: boolean; api: boolean; paywalled?: boolean };
-
-const UNLOCK_KEY = "city-lab-photo-unlock";
-
-function photoUnlocked() {
-  return typeof localStorage !== "undefined" && localStorage.getItem(UNLOCK_KEY) === "1";
-}
+import {
+  type FacadeStatus,
+  PHOTO_SALES_EMAIL,
+  PHOTO_SALES_MAILTO,
+  facadePaintLocked,
+  fetchFacadeStatus,
+  photoUnlocked,
+  unlockPhoto,
+} from "./status";
 
 export type PickedHouse = { label: string; x: number; z: number; heading: number };
 
@@ -23,6 +24,9 @@ type Props = {
   onCompare: () => void;
   onReset: () => void;
   onPickAnother: () => void;
+  onStatus?: (status: FacadeStatus) => void;
+  onUnlocked?: () => void;
+  knownStatus?: FacadeStatus | null;
 };
 
 async function fileDataUrl(file: File) {
@@ -63,17 +67,23 @@ function Field({
 }
 
 export function FacadeDialog({
-  open, job, picked, pickError, onClose, onApplied, onChanged, onReset, onPickAnother, onCompare,
+  open, job, picked, pickError, onClose, onApplied, onChanged, onReset, onPickAnother, onCompare, onStatus, onUnlocked, knownStatus,
 }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [preview, setPreview] = useState(job?.photo ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [status, setStatus] = useState<Status | null>(null);
+  const [status, setStatus] = useState<FacadeStatus | null>(knownStatus ?? null);
   const [draft, setDraft] = useState<FacadeDescription | null>(job?.facade ?? null);
   const [unlocked, setUnlocked] = useState(photoUnlocked);
   const onChangedRef = useRef(onChanged);
+  const onStatusRef = useRef(onStatus);
   onChangedRef.current = onChanged;
+  onStatusRef.current = onStatus;
+
+  useEffect(() => {
+    if (knownStatus) setStatus(knownStatus);
+  }, [knownStatus]);
 
   useEffect(() => {
     if (!open) return;
@@ -85,10 +95,10 @@ export function FacadeDialog({
     } else {
       setDraft(null);
     }
-    void fetch("/api/facade/status")
-      .then((r) => r.json())
-      .then((data) => setStatus(data))
-      .catch(() => setStatus(null));
+    void fetchFacadeStatus().then((next) => {
+      setStatus(next);
+      onStatusRef.current?.(next);
+    });
   }, [open, job]);
 
   useEffect(() => {
@@ -236,32 +246,57 @@ export function FacadeDialog({
     );
   }
 
-  if (picked && status?.paywalled && !unlocked) {
+  if (!job && status === null) return null;
+
+  if (!job && facadePaintLocked(status, unlocked)) {
     return (
       <div className="modal-backdrop">
         <section className="dialog facade-dialog facade-paywall" role="dialog" aria-modal="true" aria-labelledby="facade-paywall-title">
           <button className="close-button" aria-label="Close façade tool" onClick={onClose}>
             <X size={20} />
           </button>
-          <div className="eyebrow">CITY LAB PHOTO</div>
-          <h2 id="facade-paywall-title">Vision is behind a paywall.</h2>
-          <p>
-            Reading a street photo needs vision. Codex on this machine is free.
-            Without it, unlock City Lab Photo on this computer.
-          </p>
-          <button
-            className="enter-button"
-            onClick={() => {
-              localStorage.setItem(UNLOCK_KEY, "1");
-              setUnlocked(true);
-            }}
-          >
-            <KeyRound size={18} />
-            <span>
-              Unlock on this machine
-              <small>Keeps working after you close the tab</small>
-            </span>
-          </button>
+          <div className="eyebrow">CITY LAB PHOTO · PREMIUM</div>
+          <h2 id="facade-paywall-title">
+            {status?.hosted ? "A paid add-on." : "Vision is behind a paywall."}
+          </h2>
+          {status?.hosted ? (
+            <>
+              <p>
+                Walking Adliswil is free. Painting a house from a street photo —
+                including the Poststrasse 9 example — needs a City Lab Photo licence.
+                Pay, then write to us. We turn it on for your organisation.
+              </p>
+              <a className="enter-button" href={PHOTO_SALES_MAILTO}>
+                <Mail size={18} />
+                <span>
+                  Request City Lab Photo
+                  <small>Email us to pay and get access</small>
+                </span>
+              </a>
+              <a className="text-button" href={PHOTO_SALES_MAILTO}>{PHOTO_SALES_EMAIL}</a>
+            </>
+          ) : (
+            <>
+              <p>
+                Reading a street photo needs vision. Codex on this machine is free.
+                Without it, unlock City Lab Photo on this computer.
+              </p>
+              <button
+                className="enter-button"
+                onClick={() => {
+                  unlockPhoto();
+                  setUnlocked(true);
+                  onUnlocked?.();
+                }}
+              >
+                <KeyRound size={18} />
+                <span>
+                  Unlock on this machine
+                  <small>Keeps working after you close the tab</small>
+                </span>
+              </button>
+            </>
+          )}
         </section>
       </div>
     );
@@ -317,7 +352,9 @@ export function FacadeDialog({
       <div>
         <div className="eyebrow">PAINT A HOUSE</div>
         <p>{pickError || "Click a house. We take the address, then you add a photo."}</p>
-        <button className="text-button" disabled={busy} onClick={() => void loadExample()}>Try Poststrasse 9 photo example</button>
+        {!status?.hosted && (
+          <button className="text-button" disabled={busy} onClick={() => void loadExample()}>Try Poststrasse 9 photo example</button>
+        )}
         {error && <p role="alert">{error}</p>}
       </div>
       <button className="close-button" aria-label="Cancel house paint" onClick={onClose}>

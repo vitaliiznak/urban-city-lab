@@ -214,6 +214,10 @@ p {
   line-height: 1.9;
   margin: 0 0 30px;
 }
+a.enter-button {
+  text-decoration: none;
+  color: #1a2a1c;
+}
 .enter-button {
   display: flex;
   align-items: center;
@@ -264,6 +268,10 @@ p {
   font-weight: 400;
   color: #506044;
   margin-top: 4px;
+}
+a.text-button {
+  text-decoration: none;
+  justify-content: center;
 }
 .text-button {
   display: flex;

@@ -25,6 +25,7 @@ import type { CityHandle, CityStatus, Mode, Location } from "./City";
 import { destinations, type Destination } from "./destinations";
 import { FacadeDialog, type PickedHouse } from "./facade-tool/FacadeDialog";
 import type { PhotoFacadeJob } from "./facade-tool/types";
+import { type FacadeStatus, facadePaintLocked, fetchFacadeStatus, photoUnlocked } from "./facade-tool/status";
 const City = lazy(() => import("./City"));
 const initialStatus: CityStatus = {
   terrain: "Loading",
@@ -43,6 +44,8 @@ export default function App() {
   const [facadeOpen, setFacadeOpen] = useState(false);
   const [facadeJob, setFacadeJob] = useState<PhotoFacadeJob | null>(null);
   const [facadePick, setFacadePick] = useState<PickedHouse | null>(null);
+  const [facadeStatus, setFacadeStatus] = useState<FacadeStatus | null>(null);
+  const [photoUnlock, setPhotoUnlock] = useState(photoUnlocked);
   const [pickError, setPickError] = useState("");
   const [placeLabel, setPlaceLabel] = useState("");
   const [pendingFacade, setPendingFacade] = useState<PhotoFacadeJob | null>(null);
@@ -64,6 +67,9 @@ export default function App() {
     [transition, setTransition] = useState(false),
     [fullscreen, setFullscreen] = useState(false);
   const walkInput = useRef(new Set<string>());
+  useEffect(() => {
+    void fetchFacadeStatus().then(setFacadeStatus);
+  }, []);
   const ready =
     status.terrain === "Ready" &&
     status.buildings === "Ready" &&
@@ -267,6 +273,7 @@ export default function App() {
       data-facade={placeLabel}
       data-facade-open={facadeOpen ? "1" : ""}
       data-facade-pick={facadePick?.label || ""}
+      data-facade-paywall={facadePaintLocked(facadeStatus, photoUnlock) ? "1" : ""}
       data-motion={location.motion || "Idle"}
       data-obstacle={location.obstacle || ""}
     >
@@ -276,11 +283,22 @@ export default function App() {
           mode={mode}
           paused={paused || info || places || comparing}
           referenceView={comparing ? facadeJob?.referenceView : undefined}
-          pickingHouse={facadeOpen && !facadeJob}
+          pickingHouse={facadeOpen && !facadeJob && !facadePaintLocked(facadeStatus, photoUnlock)}
           onHouseHit={(hit) => {
+            if (facadePaintLocked(facadeStatus, photoUnlock)) return;
             void fetch(`/api/facade/at?x=${hit.x}&z=${hit.z}`)
               .then((r) => r.json())
-              .then((data: { house?: PickedHouse | null }) => {
+              .then((data: { house?: PickedHouse | null; paywalled?: boolean; hosted?: boolean }) => {
+                if (data.paywalled || data.hosted) {
+                  setFacadeStatus((current) => current ?? {
+                    llm: "none",
+                    codex: false,
+                    api: false,
+                    paywalled: true,
+                    hosted: true,
+                  });
+                  return;
+                }
                 if (!data.house) {
                   setPickError("No address on that building.");
                   return;
@@ -341,7 +359,11 @@ export default function App() {
             <>
               <button
                 className="icon-button"
-                aria-label="Paint a house from a photo"
+                aria-label={
+                  facadeStatus?.hosted
+                    ? "Paint a house from a photo (premium)"
+                    : "Paint a house from a photo"
+                }
                 aria-expanded={facadeOpen}
                 onClick={() => {
                   setInfo(false);
@@ -594,6 +616,9 @@ export default function App() {
           job={facadeJob}
           picked={facadePick}
           pickError={pickError}
+          knownStatus={facadeStatus}
+          onStatus={setFacadeStatus}
+          onUnlocked={() => setPhotoUnlock(true)}
           onClose={() => {
             setFacadeOpen(false);
             if (!facadeJob) setFacadePick(null);

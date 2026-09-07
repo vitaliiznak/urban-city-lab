@@ -1,0 +1,15 @@
+{
+  "$schema": "https://unpkg.com/wrangler@4.130.0/config-schema.json",
+  "name": "city-lab",
+  "account_id": "c43726846f412f9d628c2f83229a790c",
+  "main": "worker.ts",
+  "compatibility_date": "2026-09-09",
+  "workers_dev": true,
+  "preview_urls": true,
+  "assets": {
+    "directory": "./dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/api/*"]
+  }
+}
