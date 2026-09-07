@@ -1,0 +1,32 @@
+import type { FacadeDescription } from "./types";
+
+export const rifertstrasse22aFacade: Omit<FacadeDescription, "buildingId" | "wallId"> = {
+  version: 2,
+  wallColor: "#afb0aa",
+  baseColor: "#5f6361",
+  baseHeight: 0.26,
+  roofColor: "#3a3e40",
+  overhang: true,
+  gable: true,
+  observations: "Codex vision of Rifertstrasse 22a: grey plaster, darker set-back ground storey, recessed entrance, shuttered left windows, circular lamp, 22a plaque, five gable vents.",
+  undercroft: { x: 0.24, width: 0.38, height: 0.24, depth: 0.5, pillars: 1 },
+  elements: [
+    { kind: "recess", x: 0.22, y: 0.13, width: 0.32, height: 0.22, depth: 0.55, color: "#3d413f", accent: "#5f6361", text: "", shutters: false },
+    { kind: "door", x: 0.22, y: 0.125, width: 0.14, height: 0.19, depth: 0.42, color: "#8aa0aa", accent: "#e0e1d8", text: "", shutters: false },
+    { kind: "window", x: 0.62, y: 0.16, width: 0.055, height: 0.1, depth: 0.03, color: "#626c6b", accent: "#d6d7cc", text: "", shutters: false },
+    { kind: "light", x: 0.71, y: 0.17, width: 0.04, height: 0.04, depth: 0.03, color: "#d2d7d0", accent: "#626a64", text: "", shutters: false },
+    { kind: "window", x: 0.8, y: 0.16, width: 0.055, height: 0.1, depth: 0.03, color: "#4e5a59", accent: "#d6d7cc", text: "", shutters: false },
+    { kind: "sign", x: 0.055, y: 0.235, width: 0.05, height: 0.032, depth: 0.02, color: "#344c70", accent: "#e5e7e0", text: "22a", shutters: false },
+    { kind: "window", x: 0.22, y: 0.455, width: 0.16, height: 0.12, depth: 0.03, color: "#68737a", accent: "#e0e1d8", text: "", shutters: true },
+    { kind: "window", x: 0.5, y: 0.455, width: 0.055, height: 0.12, depth: 0.03, color: "#555d64", accent: "#cdcec5", text: "", shutters: false },
+    { kind: "window", x: 0.78, y: 0.455, width: 0.12, height: 0.12, depth: 0.03, color: "#404d50", accent: "#cdcec5", text: "", shutters: false },
+    { kind: "window", x: 0.22, y: 0.66, width: 0.16, height: 0.12, depth: 0.03, color: "#68737a", accent: "#e0e1d8", text: "", shutters: true },
+    { kind: "window", x: 0.5, y: 0.66, width: 0.055, height: 0.12, depth: 0.03, color: "#555d64", accent: "#cdcec5", text: "", shutters: false },
+    { kind: "window", x: 0.78, y: 0.66, width: 0.12, height: 0.12, depth: 0.03, color: "#677078", accent: "#cdcec5", text: "", shutters: false },
+    { kind: "vent", x: 0.5, y: 0.94, width: 0.032, height: 0.032, depth: 0, color: "#555b55", accent: "#555b55", text: "", shutters: false },
+    { kind: "vent", x: 0.44, y: 0.88, width: 0.028, height: 0.028, depth: 0, color: "#555b55", accent: "#555b55", text: "", shutters: false },
+    { kind: "vent", x: 0.56, y: 0.88, width: 0.028, height: 0.028, depth: 0, color: "#555b55", accent: "#555b55", text: "", shutters: false },
+    { kind: "vent", x: 0.47, y: 0.82, width: 0.026, height: 0.026, depth: 0, color: "#555b55", accent: "#555b55", text: "", shutters: false },
+    { kind: "vent", x: 0.53, y: 0.82, width: 0.026, height: 0.026, depth: 0, color: "#555b55", accent: "#555b55", text: "", shutters: false },
+  ],
+};

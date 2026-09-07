@@ -1,0 +1,37 @@
+{
+  "name": "adliswil-city-lab",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "tsx --test tests/*.test.ts tests/*.test.mjs",
+    "prepare:geography": "node scripts/prepare-geography.mjs",
+    "prepare:avatar": "node scripts/prepare-avatar.mjs",
+    "prepare:street-cleanup": "node scripts/prepare-street-cleanup.mjs",
+    "prepare:world-details": "tsx scripts/prepare-world-details.mjs",
+    "prepare:transport": "node scripts/prepare-transport.mjs",
+    "prepare:population": "tsx scripts/prepare-population.mjs",
+    "prepare:cableway": "tsx scripts/prepare-cableway.mjs",
+    "check:cableway": "tsx scripts/check-cableway-clearance.mjs"
+  },
+  "dependencies": {
+    "cesium": "1.145.0",
+    "lucide-react": "0.468.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
+    "three": "0.185.1"
+  },
+  "devDependencies": {
+    "@napi-rs/canvas": "1.0.8",
+    "@types/node": "22.18.0",
+    "@types/react": "19.1.10",
+    "@types/react-dom": "19.1.9",
+    "tsx": "4.20.5",
+    "typescript": "5.9.2",
+    "vite": "6.4.3",
+    "vite-plugin-static-copy": "2.3.2"
+  }
+}

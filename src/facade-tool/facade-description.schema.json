@@ -1,0 +1,181 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PhotoFacade",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "version",
+    "fidelity",
+    "wallColor",
+    "baseColor",
+    "baseHeight",
+    "roofColor",
+    "overhang",
+    "gable",
+    "observations",
+    "undercroft",
+    "elements"
+  ],
+  "properties": {
+    "version": {
+      "type": "integer",
+      "enum": [
+        2
+      ]
+    },
+    "wallColor": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "baseColor": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "baseHeight": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1
+    },
+    "roofColor": {
+      "type": "string",
+      "pattern": "^#[0-9a-fA-F]{6}$"
+    },
+    "overhang": {
+      "type": "boolean"
+    },
+    "gable": {
+      "type": "boolean"
+    },
+    "observations": {
+      "type": "string",
+      "maxLength": 1200
+    },
+    "undercroft": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "required": [
+        "x",
+        "width",
+        "height",
+        "depth",
+        "pillars"
+      ],
+      "properties": {
+        "x": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "width": {
+          "type": "number",
+          "minimum": 0.12,
+          "maximum": 1
+        },
+        "height": {
+          "type": "number",
+          "minimum": 0.08,
+          "maximum": 0.55
+        },
+        "depth": {
+          "type": "number",
+          "minimum": 0.12,
+          "maximum": 1
+        },
+        "pillars": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 6
+        }
+      }
+    },
+    "elements": {
+      "type": "array",
+      "maxItems": 80,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "kind",
+          "x",
+          "y",
+          "width",
+          "height",
+          "depth",
+          "color",
+          "accent",
+          "text",
+          "shutters",
+          "blind"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "window",
+              "door",
+              "sign",
+              "vent",
+              "balcony",
+              "recess",
+              "light"
+            ]
+          },
+          "x": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "y": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          },
+          "width": {
+            "type": "number",
+            "minimum": 0.005,
+            "maximum": 1
+          },
+          "height": {
+            "type": "number",
+            "minimum": 0.005,
+            "maximum": 1
+          },
+          "depth": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1.5
+          },
+          "color": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "accent": {
+            "type": "string",
+            "pattern": "^#[0-9a-fA-F]{6}$"
+          },
+          "text": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "shutters": {
+            "type": "boolean"
+          },
+          "blind": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      }
+    },
+    "fidelity": {
+      "type": "string",
+      "enum": [
+        "observed"
+      ]
+    }
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "source": "https://3d.geo.admin.ch/ch.swisstopo.swisstlm3d.3d/v1/20260520/5/18/24.b3dm",
+  "checked": "2026-09-09",
+  "uuid": "8EC07EDC-1BE2-4695-82FC-4C277237FA08",
+  "name": "Adliswil-Felsenegg",
+  "bufferRadiusMetres": 1,
+  "note": "Batch-table NAME, UUID and BufferRadius identify the coarse static cableway tube. Replace only this feature while the local cable model is ready and visible. Station buildings and other Swiss infrastructure remain streamed."
+}
