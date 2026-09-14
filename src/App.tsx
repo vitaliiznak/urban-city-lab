@@ -67,8 +67,23 @@ export default function App() {
     [transition, setTransition] = useState(false),
     [fullscreen, setFullscreen] = useState(false);
   const walkInput = useRef(new Set<string>());
+  const uiHold = useRef(new Set<string>());
   useEffect(() => {
     void fetchFacadeStatus().then(setFacadeStatus);
+  }, []);
+  useEffect(() => {
+    const releaseUi = () => {
+      for (const key of uiHold.current) walkInput.current.delete(key);
+      uiHold.current.clear();
+    };
+    window.addEventListener("pointerup", releaseUi);
+    window.addEventListener("pointercancel", releaseUi);
+    window.addEventListener("blur", releaseUi);
+    return () => {
+      window.removeEventListener("pointerup", releaseUi);
+      window.removeEventListener("pointercancel", releaseUi);
+      window.removeEventListener("blur", releaseUi);
+    };
   }, []);
   const ready =
     status.terrain === "Ready" &&
@@ -83,6 +98,7 @@ export default function App() {
       if (e.key === "Escape") {
         if (comparing) { closeComparison(); return; }
         walkInput.current.clear();
+        uiHold.current.clear();
         if (places) setPlaces(false);
         else if (info) setInfo(false);
         else if (facadeOpen) {
@@ -245,11 +261,21 @@ export default function App() {
       }
       onPointerDown={(e) => {
         e.currentTarget.setPointerCapture(e.pointerId);
+        uiHold.current.add(key);
         walkInput.current.add(key);
       }}
-      onPointerUp={() => walkInput.current.delete(key)}
-      onPointerCancel={() => walkInput.current.delete(key)}
-      onLostPointerCapture={() => walkInput.current.delete(key)}
+      onPointerUp={() => {
+        uiHold.current.delete(key);
+        walkInput.current.delete(key);
+      }}
+      onPointerCancel={() => {
+        uiHold.current.delete(key);
+        walkInput.current.delete(key);
+      }}
+      onLostPointerCapture={() => {
+        uiHold.current.delete(key);
+        walkInput.current.delete(key);
+      }}
       onContextMenu={(e) => e.preventDefault()}
     >
       {key === "w" ? (

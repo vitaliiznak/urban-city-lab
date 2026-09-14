@@ -238,6 +238,7 @@ export class ThreeCity {
     this.mode = mode;
     this.quality.setMode(mode);
     this.keys.clear();
+    this.aerialDragging = false;
     this.walking = false;
     this.player.visible = false;
     this.applyQualityIfNeeded();
@@ -962,7 +963,7 @@ export class ThreeCity {
   }
 
   private followCamera(dt: number) {
-    if (this.referenceView) return;
+    if (this.referenceView || this.mode === "intro") return;
     if (this.mode === "walk" && this.walking) {
       const scale = WORLD_SCALE;
       this.cameraOrigin.set(this.player.position.x, this.player.position.y + 1.6 * scale, this.player.position.z);
@@ -972,20 +973,22 @@ export class ThreeCity {
         this.player.position.z + Math.cos(this.yaw) * this.distance,
       );
       this.cameraGoal.y = terrainCameraHeight(this.cameraOrigin, this.cameraGoal, this.heightAt);
-      this.cameraDirection.copy(this.cameraGoal).sub(this.cameraOrigin);
-      let safe = this.cameraDirection.length();
-      this.cameraDirection.normalize();
-      this.cameraGoal.copy(this.cameraOrigin).addScaledVector(this.cameraDirection, safe);
+      this.buildingCamera?.constrain?.(this.cameraOrigin, this.cameraGoal);
       this.cameraGoal.y = Math.max(this.cameraGoal.y, this.heightAt(this.cameraGoal.x, this.cameraGoal.z) + 0.35);
       this.lookGoal.set(this.player.position.x, this.player.position.y + 1.35 * scale, this.player.position.z);
     }
-    this.camera.position.lerp(this.cameraGoal, 1 - Math.exp(-dt * 5));
+    const settle = 1 - Math.exp(-dt * 5);
+    if (this.camera.position.distanceToSquared(this.cameraGoal) < 1e-8) this.camera.position.copy(this.cameraGoal);
+    else this.camera.position.lerp(this.cameraGoal, settle);
     if (this.mode === "walk" && this.walking) {
-      this.cameraOrigin.set(this.player.position.x, this.player.position.y + 1.6 * WORLD_SCALE, this.player.position.z);
-      this.camera.position.y = terrainCameraHeight(this.cameraOrigin, this.camera.position, this.heightAt);
+      this.camera.position.y = Math.max(
+        this.camera.position.y,
+        this.heightAt(this.camera.position.x, this.camera.position.z) + 0.35,
+      );
       this.buildingCamera?.constrain?.(this.cameraOrigin, this.camera.position);
     }
-    this.look.lerp(this.lookGoal, 1 - Math.exp(-dt * 8));
+    if (this.look.distanceToSquared(this.lookGoal) < 1e-8) this.look.copy(this.lookGoal);
+    else this.look.lerp(this.lookGoal, 1 - Math.exp(-dt * 8));
     this.camera.lookAt(this.look);
   }
 
@@ -1105,23 +1108,32 @@ export class ThreeCity {
       this.keys.add(key);
     };
     const up = (event: KeyboardEvent) => this.keys.delete(this.controlKey(event));
-    const clear = () => this.keys.clear();
+    const clear = () => {
+      this.keys.clear();
+      this.aerialDragging = false;
+    };
     const pointerDown = (event: PointerEvent) => {
-      if (this.mode === "intro") return;
+      if (this.mode === "intro" || this.paused || event.button !== 0) return;
       this.aerialDragging = true;
       this.lastPointer = { x: event.clientX, y: event.clientY };
       this.pickStart = { x: event.clientX, y: event.clientY };
       canvas.setPointerCapture(event.pointerId);
     };
-    const pointerUp = () => {
+    const pointerUp = (event: PointerEvent) => {
       this.aerialDragging = false;
+      if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
     };
     const click = (event: MouseEvent) => {
       if (!this.pickingHouse || this.mode === "intro" || this.paused) return;
       this.pickHouseAt(event.clientX, event.clientY);
     };
     const pointerMove = (event: PointerEvent) => {
-      if (!this.aerialDragging || this.paused) return;
+      if (!this.aerialDragging || this.paused || this.mode === "intro") return;
+      if (event.buttons === 0) {
+        this.aerialDragging = false;
+        return;
+      }
+      if (Math.hypot(event.clientX - this.pickStart.x, event.clientY - this.pickStart.y) < 4) return;
       const dx = event.clientX - this.lastPointer.x;
       const dy = event.clientY - this.lastPointer.y;
       this.lastPointer = { x: event.clientX, y: event.clientY };
@@ -1137,6 +1149,7 @@ export class ThreeCity {
       this.nudgeAerial(-dx * 0.12, dy * 0.12);
     };
     const wheel = (event: WheelEvent) => {
+      if (this.mode === "intro" || this.paused) return;
       event.preventDefault();
       if (this.mode === "walk" && this.walking) {
         this.distance = Math.max(5 * WORLD_SCALE, Math.min(28 * WORLD_SCALE, this.distance + event.deltaY * 0.012 * WORLD_SCALE));
@@ -1150,6 +1163,8 @@ export class ThreeCity {
     document.addEventListener("visibilitychange", clear);
     canvas.addEventListener("pointerdown", pointerDown);
     window.addEventListener("pointerup", pointerUp);
+    canvas.addEventListener("pointercancel", pointerUp);
+    canvas.addEventListener("lostpointercapture", pointerUp);
     canvas.addEventListener("pointermove", pointerMove);
     canvas.addEventListener("click", click);
     canvas.addEventListener("wheel", wheel, { passive: false });
@@ -1159,7 +1174,12 @@ export class ThreeCity {
       window.removeEventListener("blur", clear);
       document.removeEventListener("visibilitychange", clear);
       window.removeEventListener("pointerup", pointerUp);
+      canvas.removeEventListener("pointerdown", pointerDown);
+      canvas.removeEventListener("pointercancel", pointerUp);
+      canvas.removeEventListener("lostpointercapture", pointerUp);
+      canvas.removeEventListener("pointermove", pointerMove);
       canvas.removeEventListener("click", click);
+      canvas.removeEventListener("wheel", wheel);
     });
   }
 
