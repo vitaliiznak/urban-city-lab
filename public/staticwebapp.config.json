@@ -1,0 +1,6 @@
+{
+  "navigationFallback": {
+    "rewrite": "/index.html",
+    "exclude": ["/assets/*", "/api/*", "/data/*", "/world-details/*", "/reference/*", "/cesium/*", "/Workers/*", "/ThirdParty/*", "*.{js,css,json,png,jpg,jpeg,webp,svg,glb,wasm,ico}"]
+  }
+}

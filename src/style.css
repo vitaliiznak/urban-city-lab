@@ -1040,13 +1040,6 @@ kbd {
   align-items: flex-start;
   margin-bottom: 14px;
 }
-.facade-thumb {
-  width: 72px;
-  height: 72px;
-  object-fit: cover;
-  border-radius: 8px;
-  flex-shrink: 0;
-}
 .facade-editor h2 {
   font-size: 20px;
   margin: 6px 0 6px;
@@ -1214,11 +1207,9 @@ kbd {
   opacity: 0;
   overflow: hidden;
 }
-.facade-preview {
-  width: 56px;
-  height: 56px;
-  object-fit: cover;
-  border-radius: 4px;
+.facade-drop span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 .facade-provider {
   margin: 12px 0 8px;
@@ -1266,19 +1257,16 @@ kbd {
   font-size: 11px;
 }
 
-/* Keep the original photograph alongside a paused, geographically placed model. */
-.comparing-facade .city { width: 64%; }
+/* Show the painted building at full width with compact 3D controls. */
+.comparing-facade .city { width: 100%; height: 100%; }
 .comparing-facade > :not(.city):not(.reference-comparison) { visibility: hidden; pointer-events: none; }
 .comparing-facade .reference-comparison { visibility: visible; }
-.reference-comparison { position: absolute; inset: 0 0 0 64%; z-index: 20; padding: 24px; background: #14231d; color: #f4f5ec; overflow: auto; }
-.reference-comparison h2 { margin: 8px 0 16px; }
-.reference-comparison img { width: 100%; max-height: calc(100vh - 245px); object-fit: contain; background: #0c1511; }
+.reference-comparison { position: absolute; left: 20px; bottom: 20px; max-width: calc(100% - 40px); z-index: 20; padding: 16px 20px; border-radius: 12px; background: #14231df2; color: #f4f5ec; }
+.reference-comparison h2 { margin: 6px 0 12px; font-size: 20px; }
 .reference-comparison p { font-size: 12px; line-height: 1.5; }
 .reference-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .reference-actions button { padding: 12px; border: 1px solid #627064; background: #e7efce; color: #14231d; border-radius: 8px; cursor: pointer; }
 .reference-state { color: #c8d3b8; }
 @media (max-width: 700px) {
-  .comparing-facade .city { width: 100%; height: 52%; }
-  .reference-comparison { inset: 52% 0 0; padding: 12px; }
-  .reference-comparison img { width: 38%; max-height: 28vh; float: left; margin-right: 14px; }
+  .reference-comparison { left: 12px; bottom: 12px; max-width: calc(100% - 24px); padding: 12px; }
 }

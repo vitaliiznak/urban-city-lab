@@ -105,12 +105,18 @@ The same preparation command derives `public/population/river.json`: two mapped 
 
 Tests check complete duck orbits against water and island boundaries, woodland habitat clearance against buildings and solid furniture, the dog's owner trail and complete animated GLBs. River browser evidence, pause and aerial behavior are recorded in `output/playwright/WILDLIFE.md`; woodland and dog close-up visual checks remain.
 
-## Photo accuracy example: Poststrasse 9
+## Prepared façades: Poststrasse 9 and Bahnhofplatz 4
 
-Enter the world → **Paint a house from a photo** → **Try Poststrasse 9 photo example** → **Compare photo and 3D**. The example and original photograph are bundled, so loading it requires no vision service. The comparison pauses the world, displays the source alongside the building and lets you switch between the original and enhanced model. **Back to exploring** (or Escape) restores walking.
+For the user's **Poststrasse 9** photograph: enter the world → **Paint a house from a photo** → **Try Poststrasse 9** → choose or drop the same photo → **Paint this house**. The file chooser and drop area accept an image and show its filename only; the photograph is not displayed. Painting automatically opens the full-width prepared 3D model, with a toggle between the original and enhanced building. **Back to exploring** (or Escape) restores walking.
+
+The reviewed façade is prepared ahead of time and bundled. Selecting a file enables painting; the example assumes the user selects the same photo and does not interpret or verify the selected image. Applying it makes no generation request or LLM call, including with no vision service. Uploads for buildings without a prepared façade use the usual vision flow.
+
+The Poststrasse 9 entry uses the tall model shown in the supplied photo, UUID `C507D4AC-25B0-4F5C-9C28-D95B628F250F`, and retains the user's requested address label. The local derived address-to-model mapping points Poststrasse 9 to a different body; `addressBasis: "user-photo"` records this deliberate photo-based selection, also noted in the UI. Reproduce with `npm run prepare:facade:poststrasse`. [Photo sources and placement notes](public/reference/poststrasse-9-prepared/README.md).
+
+The previously prepared **Bahnhofplatz 4, 8134 Adliswil** entry remains available when selecting that address in the local world. Both entries use the same photographed model. The local catalog associates that model with Bahnhofplatz 4 by entrance containment. The address records are official; their association with mesh UUIDs is derived locally. Run `npm run prepare:facade` to reproduce that entry from the reviewed geometry and local geographic snapshots; this preparation makes no network requests.
 
 The reviewed example preserves asymmetric windows, four principal storeys, the right-hand balcony stack, broad shopfront glazing and the measured recessed top storey. Collinear footprint samples become complete wall spans. Details are assigned to separate visible faces, and old corridor decorations are temporarily hidden by exact building UUID ranges, then restored on reset. The shared Explorer corridor builder now retains those ownership ranges without changing its geometry or appearance.
 
 New vision responses request `fidelity: "observed"`: no invented repeated bays or unseen side windows, no automatic size/grid replacement, and visible roller-blind closure. Existing saved legacy jobs retain their older adjustment behavior. The supplied example is manually reviewed; no fresh vision-model accuracy claim is made.
 
-Source and limitations: [reference notes](public/reference/poststrasse-9/README.md). Browser comparison and verification: [Poststrasse 9 QA](output/playwright/POSTSTRASSE-9.md).
+Source and limitations: [prepared reference notes](public/reference/bahnhofplatz-4/README.md). Earlier geometry comparison: [photo QA](output/playwright/POSTSTRASSE-9.md), which retains the old address label.

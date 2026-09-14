@@ -163,6 +163,8 @@ export default function App() {
     setFacadeJob(job);
     setFacadeOpen(true);
     setPaused(false);
+    setOriginalFacade(false);
+    setComparing(Boolean(job.referenceView));
     if (mode !== "walk") {
       setPendingFacade(job);
       setMode("walk");
@@ -593,21 +595,19 @@ export default function App() {
         </>
       )}
       {comparing && facadeJob && (
-        <aside className="reference-comparison" aria-label="Photo comparison">
-          <div className="eyebrow">PHOTO REFERENCE</div>
+        <aside className="reference-comparison" aria-label="Painted building">
+          <div className="eyebrow">{originalFacade ? "ORIGINAL MODEL" : "PAINTED MODEL"}</div>
           <h2>{facadeJob.address.label}</h2>
-          <img src={facadeJob.photo} alt="User-provided street photograph of Poststrasse 9" />
-          <p>Four window rows, a narrow/wide window pair, right-hand balconies and a glazed shopfront. Dimensions and hidden details remain approximate.</p>
           <div className="reference-actions">
             <button aria-pressed={originalFacade} onClick={() => {
               const next = !originalFacade;
               setOriginalFacade(next);
               if (next) cityRef.current?.clearPhotoFacade();
               else cityRef.current?.applyPhotoFacade(facadeJob, {relocate: false});
-            }}>{originalFacade ? "Show enhanced 3D" : "Show original 3D"}</button>
+            }}>{originalFacade ? "Show painted 3D" : "Show original 3D"}</button>
             <button onClick={closeComparison}>Back to exploring</button>
           </div>
-          <p className="reference-state">{originalFacade ? "Original measured model" : "Photo-enhanced model"} · same camera · world paused</p>
+          <p className="reference-state">{originalFacade ? "Original measured model" : "Prepared façade"} · world paused</p>
         </aside>
       )}
       {facadeOpen && !comparing && (
@@ -624,6 +624,7 @@ export default function App() {
             if (!facadeJob) setFacadePick(null);
           }}
           onApplied={applyFacade}
+          onSelectHouse={visitHouse}
           onChanged={changeFacade}
           onCompare={() => {setOriginalFacade(false); setComparing(true);}}
           onReset={() => {

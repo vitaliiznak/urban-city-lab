@@ -113,6 +113,7 @@ export type WallHint = {
 
 export type PhotoFacadeJob = {
   provider: "codex-cli" | "api" | "fixture" | "reviewed-photo";
+  addressBasis?: "user-photo";
   reviewedFaces?: { wallId: string; facade: FacadeDescription; surface?: StreetWall }[];
   referenceView?: { position: [number, number, number]; target: [number, number, number] };
   photo?: string;

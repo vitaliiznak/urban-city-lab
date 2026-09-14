@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Check, ImagePlus, KeyRound, Mail, Pencil, RotateCcw, X } from "lucide-react";
+import { Building2, Check, ImagePlus, KeyRound, Mail, Pencil, RotateCcw, X } from "lucide-react";
 import type { FacadeDescription, PhotoFacadeJob } from "./types";
+import { featuredPreparedFacade, preparedFacadeFor } from "./prepared";
 import {
   type FacadeStatus,
   PHOTO_SALES_EMAIL,
@@ -24,6 +25,7 @@ type Props = {
   onCompare: () => void;
   onReset: () => void;
   onPickAnother: () => void;
+  onSelectHouse: (house: PickedHouse) => void;
   onStatus?: (status: FacadeStatus) => void;
   onUnlocked?: () => void;
   knownStatus?: FacadeStatus | null;
@@ -67,15 +69,15 @@ function Field({
 }
 
 export function FacadeDialog({
-  open, job, picked, pickError, onClose, onApplied, onChanged, onReset, onPickAnother, onCompare, onStatus, onUnlocked, knownStatus,
+  open, job, picked, pickError, onClose, onApplied, onChanged, onReset, onPickAnother, onSelectHouse, onCompare, onStatus, onUnlocked, knownStatus,
 }: Props) {
   const [file, setFile] = useState<File | null>(null);
-  const [preview, setPreview] = useState(job?.photo ?? "");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [status, setStatus] = useState<FacadeStatus | null>(knownStatus ?? null);
   const [draft, setDraft] = useState<FacadeDescription | null>(job?.facade ?? null);
   const [unlocked, setUnlocked] = useState(photoUnlocked);
+  const prepared = preparedFacadeFor(picked);
   const onChangedRef = useRef(onChanged);
   const onStatusRef = useRef(onStatus);
   onChangedRef.current = onChanged;
@@ -86,12 +88,16 @@ export function FacadeDialog({
   }, [knownStatus]);
 
   useEffect(() => {
+    setFile(null);
+    setError("");
+  }, [picked?.label, picked?.x, picked?.z]);
+
+  useEffect(() => {
     if (!open) return;
     setError("");
     setBusy(false);
     if (job) {
       setDraft(job.facade);
-      if (job.photo) setPreview(job.photo);
     } else {
       setDraft(null);
     }
@@ -113,12 +119,14 @@ export function FacadeDialog({
   if (!open) return null;
 
   function takeFile(next: File | null) {
-    setFile(next);
-    if (!next) {
-      setPreview("");
+    if (busy) return;
+    if (next && !["image/jpeg", "image/png", "image/webp"].includes(next.type)) {
+      setFile(null);
+      setError("Choose a JPEG, PNG or WebP photograph.");
       return;
     }
-    void fileDataUrl(next).then(setPreview).catch(() => setPreview(""));
+    setFile(next);
+    setError("");
   }
 
   async function submit() {
@@ -128,6 +136,15 @@ export function FacadeDialog({
     }
     if (!file) {
       setError("Add a street photograph of this house.");
+      return;
+    }
+    if (prepared) {
+      try {
+        setError("");
+        onApplied(structuredClone(prepared));
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "The prepared façade could not be applied.");
+      }
       return;
     }
     setBusy(true);
@@ -144,7 +161,6 @@ export function FacadeDialog({
       onApplied({
         ...data,
         photo: image,
-
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "The façade could not be read.");
@@ -153,15 +169,10 @@ export function FacadeDialog({
     }
   }
 
-  async function loadExample() {
-    setError(""); setBusy(true);
-    try {
-      const response = await fetch("/reference/poststrasse-9/job.json");
-      if (!response.ok) throw new Error("The example could not be loaded.");
-      onApplied(await response.json());
-    } catch (error) {
-      setError(error instanceof Error ? error.message : "The example could not be loaded.");
-    } finally { setBusy(false); }
+  function selectExample(example: PhotoFacadeJob) {
+    setError("");
+    setFile(null);
+    onSelectHouse({ ...example.address });
   }
 
   function patch(partial: Partial<FacadeDescription>) {
@@ -176,20 +187,20 @@ export function FacadeDialog({
             <X size={20} />
           </button>
           <div className="facade-head">
-            {preview && <img src={preview} alt="" className="facade-thumb" />}
             <div>
               <div className="eyebrow">PAINTED</div>
               <h2 id="facade-edit-title">{job.address.label}</h2>
               <p className="facade-provider">
-                {job.provider === "reviewed-photo" ? "Reviewed against the supplied photograph" : job.provider === "codex-cli"
+                {job.provider === "reviewed-photo" ? "Prepared from the reference photo · no AI call" : job.provider === "codex-cli"
                   ? "Read by Codex CLI"
                   : job.provider === "api"
                     ? "Read by the vision API"
                     : "Fixture — no model ran"}
               </p>
+              {job.addressBasis === "user-photo" && <p className="facade-provider">Photo-selected building · local address mapping differs</p>}
             </div>
           </div>
-          {job.referenceView && <button className="enter-button" onClick={onCompare}><ImagePlus size={18} /><span>Compare photo and 3D<small>Same viewpoint · original / enhanced</small></span></button>}
+          {job.referenceView && <button className="enter-button" onClick={onCompare}><Building2 size={18} /><span>View painted model<small>Original / painted 3D</small></span></button>}
           {!job.reviewedFaces && <>
           <div className="facade-colors">
             <Field id="wall-color" label="Walls" type="color" value={draft.wallColor} onChange={(value) => patch({ wallColor: value })} />
@@ -232,7 +243,6 @@ export function FacadeDialog({
             className="text-button"
             onClick={() => {
               setFile(null);
-              setPreview("");
               setDraft(null);
               onReset();
             }}
@@ -246,9 +256,9 @@ export function FacadeDialog({
     );
   }
 
-  if (!job && status === null) return null;
+  if (!job && status === null && !prepared) return null;
 
-  if (!job && facadePaintLocked(status, unlocked)) {
+  if (!job && !prepared && facadePaintLocked(status, unlocked)) {
     return (
       <div className="modal-backdrop">
         <section className="dialog facade-dialog facade-paywall" role="dialog" aria-modal="true" aria-labelledby="facade-paywall-title">
@@ -262,8 +272,8 @@ export function FacadeDialog({
           {status?.hosted ? (
             <>
               <p>
-                Walking Adliswil is free. Painting a house from a street photo —
-                including the Poststrasse 9 example — needs a City Lab Photo licence.
+                Walking Adliswil is free. Painting a house from a new street photo
+                needs a City Lab Photo licence.
                 Pay, then write to us. We turn it on for your organisation.
               </p>
               <a className="enter-button" href={PHOTO_SALES_MAILTO}>
@@ -297,6 +307,8 @@ export function FacadeDialog({
               </button>
             </>
           )}
+          <button className="text-button" onClick={() => selectExample(featuredPreparedFacade)}>Try {featuredPreparedFacade.address.label} · instant example</button>
+          <p>The prepared example is free and needs no AI service.</p>
         </section>
       </div>
     );
@@ -311,7 +323,7 @@ export function FacadeDialog({
           </button>
           <div className="eyebrow">SELECTED HOUSE</div>
           <h2 id="facade-title">{picked.label}</h2>
-          <p>Add a street photo of this house. Walk stays open.</p>
+          <p>{prepared ? "Choose your street photo, then apply the prepared façade." : "Add a street photo of this house. Walk stays open."}</p>
           <label
             className="facade-drop"
             htmlFor="facade-photo"
@@ -326,17 +338,20 @@ export function FacadeDialog({
               type="file"
               accept="image/jpeg,image/png,image/webp"
               disabled={busy}
-              onChange={(e) => takeFile(e.target.files?.[0] || null)}
+              onChange={(e) => {
+                takeFile(e.currentTarget.files?.[0] || null);
+                e.currentTarget.value = "";
+              }}
             />
-            {preview ? <img src={preview} alt="" className="facade-preview" /> : <ImagePlus size={18} />}
+            <ImagePlus size={18} />
             <span>{file ? file.name : "Drop or choose a photo"}</span>
           </label>
           {error && <p className="facade-error" role="alert">{error}</p>}
-          <button className="enter-button" onClick={() => void submit()} disabled={busy}>
+          <button className="enter-button" onClick={() => void submit()} disabled={busy || !file}>
             {busy ? <span className="spinner" /> : <Pencil size={18} />}
             <span>
               {busy ? "Reading the photograph" : "Paint this house"}
-              <small>{busy ? "This can take a minute" : "Colours wrap every wall"}</small>
+              <small>{prepared ? "Prepared façade · no AI call" : busy ? "This can take a minute" : "Colours wrap every wall"}</small>
             </span>
           </button>
           <button className="text-button" type="button" disabled={busy} onClick={onPickAnother}>
@@ -352,9 +367,7 @@ export function FacadeDialog({
       <div>
         <div className="eyebrow">PAINT A HOUSE</div>
         <p>{pickError || "Click a house. We take the address, then you add a photo."}</p>
-        {!status?.hosted && (
-          <button className="text-button" disabled={busy} onClick={() => void loadExample()}>Try Poststrasse 9 photo example</button>
-        )}
+        <button className="text-button" disabled={busy} onClick={() => selectExample(featuredPreparedFacade)}>Try {featuredPreparedFacade.address.label} · instant example</button>
         {error && <p role="alert">{error}</p>}
       </div>
       <button className="close-button" aria-label="Cancel house paint" onClick={onClose}>
